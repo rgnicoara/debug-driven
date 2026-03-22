@@ -109,6 +109,16 @@ Example:
   - Rule out: Log shows discount_rate matches the current DB value
 ```
 
+**Writing precise Confirm / Rule-out criteria:**
+Criteria must name **specific expected values or value ranges**, not ambiguous states. The agent doing the verdict check will compare log output literally against your criteria — if the criteria say "is false" but the log shows `undefined`, that is not a match. Write criteria that account for every value the code can actually produce.
+
+- **Good:** `initialDataFetched is falsy (false, undefined, or null)` — covers all cases
+- **Good:** `discount_rate === 0.0` — exact value
+- **Bad:** `initialDataFetched is false` — what if it's `undefined`? The verdict becomes ambiguous
+- **Bad:** `the value is wrong` — not specific enough to check mechanically
+
+If you are unsure which exact value to expect, use a range or disjunction (`X is one of [a, b, c]`) rather than guessing a single value.
+
 **Rules:**
 - Order by plausibility (most likely first)
 - Cover structurally distinct failure modes - do not list variations of the same root cause
@@ -259,31 +269,30 @@ Read `./debug-output.log` (or whatever log file path was used). Then:
 3. Identify the specific line or value that reveals the root cause
 4. If the root cause is still unclear, go back to Phase 2 and add more targeted instrumentation
 
-**After every analysis round, you MUST present a verdict for every active hypothesis.** Use this exact format - one bullet per hypothesis, no exceptions:
+**After every analysis round, you MUST present a verdict for every active hypothesis.** Every active hypothesis must get exactly one of: **CONFIRMED**, **RULED OUT**, or **INCONCLUSIVE**. No other verdicts are valid. In particular, "CONFIRMED WORKING" is not a verdict — hypotheses describe faults, and a fault is either present (CONFIRMED) or absent (RULED OUT).
 
-```text
-- H1 (Off-by-one in cursor): RULED OUT - cursor value 42 matches expected
-- H2 (Discount not applied to subtotal): CONFIRMED - subtotal_after equals subtotal_before, discount_rate=0.1 but never applied
-- H3 (Wrong product ID in lookup): INCONCLUSIVE - insufficient data, adding more logs
-```
-
-Every active hypothesis must get exactly one of: **CONFIRMED**, **RULED OUT**, or **INCONCLUSIVE**. No other verdicts are valid. In particular, "CONFIRMED WORKING" is not a verdict — hypotheses describe faults, and a fault is either present (CONFIRMED) or absent (RULED OUT).
-
-**Mechanical verdict check — do this before writing each verdict:**
+**How to produce each verdict — mechanical check, not a judgment call:**
 1. Re-read the hypothesis's **Confirm** field. Does a specific log line match it? If yes -> CONFIRMED candidate.
 2. Re-read the hypothesis's **Rule out** field. Does a specific log line match it? If yes -> RULED OUT, even if the behavior "looks related."
 3. If a log line matches the Rule-out criteria, the verdict **cannot** be CONFIRMED — full stop. The Rule-out condition is met.
 4. If neither Confirm nor Rule-out criteria are clearly matched -> INCONCLUSIVE.
 
-This is a mechanical cross-reference, not a judgment call. For each verdict, write it in this structure:
+**Use this exact format for every verdict** — one block per hypothesis, with the criteria and matching log line quoted side by side. Do NOT use a one-line summary without the evidence structure:
 
 ```text
-- H2 (Discount not applied): CONFIRMED
+- H1 (Off-by-one in cursor): RULED OUT
+  Rule-out criteria: "Log shows cursor value matches expected page boundary"
+  Matching log line: "H1 | handler.go:67 | page_cursor | 42" (42 matches expected)
+
+- H2 (Discount not applied to subtotal): CONFIRMED
   Confirm criteria: "Log shows discount_rate=0.0 at cart.js:44 despite DB having rate=0.1"
   Matching log line: "H2 | cart.js:44 | discount_rate | 0.0"
+
+- H3 (Wrong product ID in lookup): INCONCLUSIVE
+  Neither criteria matched — log shows product_id=undefined (not anticipated by Confirm or Rule-out)
 ```
 
-If you cannot produce a matching log line for the Confirm or Rule-out field, the verdict is INCONCLUSIVE.
+If you cannot produce a matching log line for the Confirm or Rule-out field, the verdict is INCONCLUSIVE — even if you believe the hypothesis is correct from reading the code. If the log value doesn't match the Confirm criteria exactly (e.g., criteria says "is false" but log shows "undefined"), note the discrepancy and mark INCONCLUSIVE or revise the criteria before confirming.
 
 **Verdict persistence:** Once a hypothesis receives CONFIRMED or RULED OUT based on specific log evidence, that verdict holds for the rest of the session unless new log evidence from a later cycle directly contradicts the original log lines. You may not flip a verdict based on reasoning about the code or because a fix didn't work — only new runtime evidence can change a verdict. If you find yourself wanting to reverse a verdict, state which new log lines contradict the original evidence.
 
@@ -342,7 +351,7 @@ After the fix is applied, use a **blocking question tool** (not a text message -
 If your platform does **not** provide a blocking question tool with selectable answers, present the same prompt and the same two choices as plain text, then wait for the user's reply before continuing.
 
 **Behavior:**
-- **"Issue still present"** -> **Phase 6 ends immediately.** Do not keep looping inside verification. Follow the **Failed-Verification Recovery Protocol** (its own section below). The very next agent action must be the mandatory recovery template — not another fix, not more verification, and not freeform instrumentation.
+- **"Issue still present"** -> **Phase 6 ends immediately.** Do not keep looping inside verification. Follow the **Failed-Verification Recovery Protocol** (its own section below). The very next agent action must be the mandatory recovery template — not another fix, not more verification, and not freeform instrumentation. **This applies every time the user selects "Issue still present" — not just the first time.** The 2nd, 3rd, and Nth failure each require the full recovery protocol with the same rigor as the 1st. Skipping the protocol on subsequent failures is the most common form of agent drift.
 - **"Mark as fixed"** -> proceed to Phase 7 (Cleanup).
 
 **Abandoning the debug session:**
@@ -358,7 +367,7 @@ This loop continues — cycling through structured debug cycles ending in Phases
 
 ### Mandatory Recovery Template
 
-Your **very first response** after `Issue still present` must follow this template exactly. Do not add instrumentation, do not edit code, do not do anything else until you have produced this complete template.
+Your **very first action** after `Issue still present` must be to **read `./debug-output.log`** to obtain post-fix evidence. Then produce the template below. Do not add instrumentation, do not edit code, do not do anything else until you have read the log file and produced this complete template.
 
 ```text
 ## Phase 6 Failed — New Debug Cycle
@@ -410,8 +419,8 @@ Do not proceed to Phase 2 until every new hypothesis is written below.]
 After a failed verification you MUST explicitly decide what to do with the failed fix. **The decision must be grounded in log evidence, not reasoning about the code.**
 
 - **Revert** when: you have no post-fix logs to compare against, or the post-fix logs show no meaningful behavior change, or the fix was based on a hypothesis that is no longer CONFIRMED, or the fix could mask or interfere with further diagnosis.
-- **Keep** when: post-fix logs show a concrete, observable behavior change in the right direction (quote the specific log lines), AND the bug persists due to an additional issue downstream of the fixed code path.
-- **Default to revert.** "The fix addresses a valid issue" or "the logic seems correct" is not sufficient justification to keep a fix that didn't work. If you cannot point to specific log lines showing changed behavior, revert.
+- **Keep** when: post-fix logs show a concrete, observable behavior change in the right direction (quote the specific log lines), AND the bug persists due to an additional issue downstream of the fixed code path. A common case: the fix corrects a prerequisite (e.g., a value that was wrong is now correct) but the symptom persists because a second fault exists downstream. If the post-fix logs prove the prerequisite is now correct, **keep the fix** — reverting it would re-introduce the first fault and force you to fix it again later.
+- **Default to revert.** "The fix addresses a valid issue" or "the logic seems correct" is not sufficient justification to keep a fix that didn't work. If you cannot point to specific log lines showing changed behavior, revert. But note: "default to revert" means revert **when you have no log evidence either way**. If you read the post-fix logs and they show a real change, that is evidence — use it.
 - Do not silently leave a failed fix in place and pile more changes on top.
 - **Stating a disposition is not the same as executing it.** After writing the recovery template:
   - If **reverted**: show the revert (undo edit, git checkout, or equivalent) before adding any new instrumentation. The next code change the agent makes must be the revert itself.
