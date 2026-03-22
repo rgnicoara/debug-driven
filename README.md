@@ -2,9 +2,7 @@
 
 This README is for developers who want to understand, install, maintain, or distribute the `debug-driven` skill.
 
-`debug-driven` is an Agent Skills-compatible debugging skill for AI coding agents.
-
-It teaches an agent to debug runtime issues with a disciplined loop:
+`debug-driven` is an Agent Skills-compatible debugging skill for AI coding agents. It teaches an agent to debug runtime issues with a disciplined loop:
 
 1. Intake the bug report
 2. Generate multiple hypotheses
@@ -15,54 +13,75 @@ It teaches an agent to debug runtime issues with a disciplined loop:
 7. Verify the fix
 8. Clean up all debug artifacts
 
-Instead of jumping straight to a guessed fix, the skill pushes the agent to instrument, observe, and only then change code.
+Instead of jumping straight to a guessed fix, the skill pushes the agent to instrument, observe, and only then change code. This makes agent-assisted debugging more disciplined, reproducible, and easier to audit.
 
-## Overview
+## Table of Contents
 
-The skill gives an agent a structured debugging workflow for runtime issues. Instead of guessing at a fix, it pushes the agent to:
+- [Installation](#installation)
+- [Usage](#usage)
+- [How It Works](#how-it-works)
+- [What The Skill Does / When To Use It](#what-the-skill-does--when-to-use-it)
+- [Requirements](#requirements)
+- [Developer Notes](#developer-notes)
+- [Repository Layout](#repository-layout)
+- [License](#license)
 
-- gather the bug report clearly
-- generate multiple hypotheses
-- add targeted instrumentation
-- collect evidence from reproduction
-- analyze logs before changing code
-- verify the fix
-- remove all debug artifacts afterward
+## Installation
 
-This makes it useful when you want agent-assisted debugging to be more disciplined, reproducible, and easier to audit.
+Install the entire `debug-driven/` directory as a skill folder in your agent's skills location. Keep the directory name as `debug-driven` so it matches the skill frontmatter.
 
-## What The Skill Does
+Repository:
 
-From a developer's perspective, the skill is designed for:
+```text
+https://github.com/rgnicoara/debug-driven.git
+```
 
-- Runtime bugs that are not obvious from static inspection alone
-- Regressions that need reproduction and evidence
-- Issues that need temporary instrumentation before a fix is safe
-- Debug sessions where cleanup matters and debug code should not survive
+Clone the repository straight into the appropriate skills location for your host (see sections below).
 
-The skill package includes:
+If you prefer not to use Git, download the repository archive from GitHub and extract the `debug-driven/` folder into your skills directory.
 
-- [SKILL.md](./SKILL.md): the main instructions and workflow
-- [scripts/http-log-ingest.js](./scripts/http-log-ingest.js): a browser-app log ingest helper for collecting debug logs into a file
-- [references/framework-recipes.md](./references/framework-recipes.md): framework-specific instrumentation examples
-- [references/cleanup-patterns.md](./references/cleanup-patterns.md): cleanup guidance for removing debug artifacts
+### Codex
 
-## When To Use It
+Copy the folder to:
 
-Use this skill when investigating a bug, unexpected behavior, or runtime failure where the right fix is not yet proven.
+```text
+$CODEX_HOME/skills/debug-driven
+```
 
-Examples:
+That is typically:
 
-- "Debug this issue"
-- "Figure out why this route sometimes returns 500"
-- "Something is wrong with the checkout flow"
-- "Help me diagnose this flaky runtime error"
+```text
+~/.codex/skills/debug-driven
+```
 
-Do not use it for:
+Example with Git:
 
-- Simple syntax errors
-- Straightforward compile failures
-- Tiny typo fixes where debugging workflow would be overkill
+```bash
+git clone https://github.com/rgnicoara/debug-driven.git ~/.codex/skills/debug-driven
+```
+
+### Claude Code
+
+Copy the folder to:
+
+```text
+.claude/skills/debug-driven
+```
+
+This can be:
+
+- a project-local `.claude/skills/` directory
+- or your broader Claude skills location, depending on your setup
+
+Example:
+
+```bash
+git clone https://github.com/rgnicoara/debug-driven.git ~/.claude/skills/debug-driven
+```
+
+### Generic Agent Skills Host
+
+Any host that supports the Agent Skills open standard can install this skill by placing the `debug-driven` directory into its configured skills directory and loading `SKILL.md` from there.
 
 ## Usage
 
@@ -118,64 +137,34 @@ The skill also requires cleanup at the end of the session:
 - delete log files
 - stop the ingest server if it was started
 
-## Installation
+## What The Skill Does / When To Use It
 
-Install the entire `debug-driven/` directory as a skill folder in your agent's skills location. Keep the directory name as `debug-driven` so it matches the skill frontmatter.
+The skill is designed for:
 
-## Install Straight From GitHub
+- Runtime bugs that are not obvious from static inspection alone
+- Regressions that need reproduction and evidence
+- Issues that need temporary instrumentation before a fix is safe
+- Debug sessions where cleanup matters and debug code should not survive
 
-Repository:
+The skill package includes:
 
-```text
-https://github.com/rgnicoara/debug-driven.git
-```
+- [SKILL.md](./SKILL.md): the main instructions and workflow
+- [scripts/http-log-ingest.js](./scripts/http-log-ingest.js): a browser-app log ingest helper for collecting debug logs into a file
+- [references/framework-recipes.md](./references/framework-recipes.md): framework-specific instrumentation examples
+- [references/cleanup-patterns.md](./references/cleanup-patterns.md): cleanup guidance for removing debug artifacts
 
-If you want to install directly from GitHub, clone the repository straight into the appropriate skills location for your host (see sections below).
+Use this skill when investigating a bug, unexpected behavior, or runtime failure where the right fix is not yet proven:
 
-If you prefer not to use Git, download the repository archive from GitHub and extract the `debug-driven/` folder into your skills directory.
+- "Debug this issue"
+- "Figure out why this route sometimes returns 500"
+- "Something is wrong with the checkout flow"
+- "Help me diagnose this flaky runtime error"
 
-### Codex
+Do not use it for:
 
-Copy the folder to:
-
-```text
-$CODEX_HOME/skills/debug-driven
-```
-
-That is typically:
-
-```text
-~/.codex/skills/debug-driven
-```
-
-Example with Git:
-
-```bash
-git clone https://github.com/rgnicoara/debug-driven.git ~/.codex/skills/debug-driven
-```
-
-### Claude Code
-
-Copy the folder to:
-
-```text
-.claude/skills/debug-driven
-```
-
-This can be:
-
-- a project-local `.claude/skills/` directory
-- or your broader Claude skills location, depending on your setup
-
-Example:
-
-```bash
-git clone https://github.com/rgnicoara/debug-driven.git .claude/skills/debug-driven
-```
-
-### Generic Agent Skills Host
-
-Any host that supports the Agent Skills open standard can install this skill by placing the `debug-driven` directory into its configured skills directory and loading `SKILL.md` from there.
+- Simple syntax errors
+- Straightforward compile failures
+- Tiny typo fixes where the debugging workflow would be overkill
 
 ## Requirements
 
