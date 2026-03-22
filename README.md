@@ -15,6 +15,8 @@ This README is for developers who want to understand, install, maintain, or dist
 
 Instead of jumping straight to a guessed fix, the skill pushes the agent to instrument, observe, and only then change code. This makes agent-assisted debugging more disciplined, reproducible, and easier to audit.
 
+Failed verification is treated as a hard boundary: verification is a gate, not a workspace for improvisational fixes. If a fix does not work, the agent must start a new evidence cycle, restate active hypotheses with verdicts, and only return to fixing after a currently active hypothesis is newly confirmed from runtime evidence.
+
 ## Table of Contents
 
 - [Installation](#installation)
@@ -117,7 +119,8 @@ At a high level:
 
 - For non-browser apps, the skill tells the agent to write debug output to `./debug-output.log`.
 - For browser apps, the skill tells the agent to start the bundled HTTP ingest server and send debug events to it with `fetch()`.
-- The agent then reads the resulting log file, reasons about which hypothesis is confirmed, applies a targeted fix, and cleans up all temporary instrumentation.
+- The agent then reads the resulting log file, reasons about which hypothesis is confirmed, applies a targeted fix, verifies it, and cleans up all temporary instrumentation.
+- If verification fails, the agent must start a new structured hypothesis cycle instead of jumping straight into another patch.
 
 For browser apps, the bundled HTTP ingest server is started with:
 
@@ -133,6 +136,13 @@ The skill also requires cleanup at the end of the session:
 - remove temporary debug helpers
 - delete log files
 - stop the ingest server if it was started
+
+### Stronger loop semantics
+
+- Failed verification starts a new evidence cycle.
+- Hypothesis numbers are monotonic within a session: `H1`, `H2`, `H3`, then `H4`, `H5`, and so on.
+- Existing hypotheses can be carried forward only under their original labels and with updated verdicts.
+- Verification is a gate, not a place for ad hoc fixes or repeated "more Phase 6" loops.
 
 ## When To Use It
 
@@ -165,6 +175,7 @@ If the host agent does not have a blocking question tool, the skill supports a p
 - The support files are meant to load on demand, not all at once.
 - The skill content in [SKILL.md](./SKILL.md) is the agent-facing instruction set; this README is supplemental documentation for humans maintaining the skill.
 - If you change file names or folder names, update the relative links inside [SKILL.md](./SKILL.md).
+- When updating the workflow, keep the failed-verification contract aligned in both `SKILL.md` and this README: no direct jump from failed verification to another production fix, no label reuse, and no instrumentation that is not tied to an active hypothesis.
 
 ## Repository Layout
 

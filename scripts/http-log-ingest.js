@@ -128,7 +128,7 @@ function jsonResponse(res, status, body) {
 
 function appendLines(lines) {
   const data = lines.map((l) => (l.endsWith("\n") ? l : l + "\n")).join("");
-  fs.appendFileSync(logFile, data);
+  fs.appendFileSync(logFile, data, "utf8");
 }
 
 const server = http.createServer((req, res) => {
@@ -145,9 +145,10 @@ const server = http.createServer((req, res) => {
 
   // Log ingestion
   if (req.method === "POST" && req.url === "/log") {
-    let body = "";
-    req.on("data", (chunk) => (body += chunk));
+    const chunks = [];
+    req.on("data", (chunk) => chunks.push(chunk));
     req.on("end", () => {
+      const body = Buffer.concat(chunks).toString("utf8");
       try {
         const payload = JSON.parse(body);
         const lines = [];
