@@ -42,10 +42,10 @@ From a developer's perspective, the skill is designed for:
 
 The skill package includes:
 
-- `[SKILL.md](./SKILL.md)`: the main instructions and workflow
-- `[scripts/http-log-ingest.js](./scripts/http-log-ingest.js)`: a browser-app log ingest helper for collecting debug logs into a file
-- `[references/framework-recipes.md](./references/framework-recipes.md)`: framework-specific instrumentation examples
-- `[references/cleanup-patterns.md](./references/cleanup-patterns.md)`: cleanup guidance for removing debug artifacts
+- [SKILL.md](./SKILL.md): the main instructions and workflow
+- [scripts/http-log-ingest.js](./scripts/http-log-ingest.js): a browser-app log ingest helper for collecting debug logs into a file
+- [references/framework-recipes.md](./references/framework-recipes.md): framework-specific instrumentation examples
+- [references/cleanup-patterns.md](./references/cleanup-patterns.md): cleanup guidance for removing debug artifacts
 
 ## When To Use It
 
@@ -180,7 +180,7 @@ Any host that supports the Agent Skills open standard can install this skill by 
 ## Requirements
 
 - An AI coding agent that can read and edit files
-- For browser debugging: Node.js, to run `[scripts/http-log-ingest.js](./scripts/http-log-ingest.js)`
+- For browser debugging: Node.js, to run [scripts/http-log-ingest.js](./scripts/http-log-ingest.js)
 - Ideally, an agent with a blocking question tool for interactive reproduce/verify loops
 
 If the host agent does not have a blocking question tool, the skill supports a plain-text fallback where the same choices are presented in normal conversation and the agent waits for the user's reply.
@@ -191,8 +191,8 @@ If the host agent does not have a blocking question tool, the skill supports a p
 - Do not move only `SKILL.md` by itself.
 - For browser debugging, use the bundled ingest script instead of inventing a custom one.
 - The support files are meant to load on demand, not all at once.
-- The skill content in `[SKILL.md](./SKILL.md)` is the agent-facing instruction set; this README is supplemental documentation for humans maintaining the skill.
-- If you change file names or folder names, update the relative links inside `[SKILL.md](./SKILL.md)`.
+- The skill content in [SKILL.md](./SKILL.md) is the agent-facing instruction set; this README is supplemental documentation for humans maintaining the skill.
+- If you change file names or folder names, update the relative links inside [SKILL.md](./SKILL.md).
 
 ## Repository Layout
 
