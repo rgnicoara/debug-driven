@@ -20,7 +20,7 @@ Instead of jumping straight to a guessed fix, the skill pushes the agent to inst
 - [Installation](#installation)
 - [Usage](#usage)
 - [How It Works](#how-it-works)
-- [What The Skill Does / When To Use It](#what-the-skill-does--when-to-use-it)
+- [When To Use It](#when-to-use-it)
 - [Requirements](#requirements)
 - [Developer Notes](#developer-notes)
 - [Repository Layout](#repository-layout)
@@ -62,18 +62,15 @@ git clone https://github.com/rgnicoara/debug-driven.git ~/.codex/skills/debug-dr
 
 ### Claude Code
 
-Copy the folder to:
+For a global install, copy the folder to:
 
 ```text
-.claude/skills/debug-driven
+~/.claude/skills/debug-driven
 ```
 
-This can be:
+For a project-local install, use the `.claude/skills/` directory at the root of your project instead.
 
-- a project-local `.claude/skills/` directory
-- or your broader Claude skills location, depending on your setup
-
-Example:
+Example (global):
 
 ```bash
 git clone https://github.com/rgnicoara/debug-driven.git ~/.claude/skills/debug-driven
@@ -137,23 +134,9 @@ The skill also requires cleanup at the end of the session:
 - delete log files
 - stop the ingest server if it was started
 
-## What The Skill Does / When To Use It
+## When To Use It
 
-The skill is designed for:
-
-- Runtime bugs that are not obvious from static inspection alone
-- Regressions that need reproduction and evidence
-- Issues that need temporary instrumentation before a fix is safe
-- Debug sessions where cleanup matters and debug code should not survive
-
-The skill package includes:
-
-- [SKILL.md](./SKILL.md): the main instructions and workflow
-- [scripts/http-log-ingest.js](./scripts/http-log-ingest.js): a browser-app log ingest helper for collecting debug logs into a file
-- [references/framework-recipes.md](./references/framework-recipes.md): framework-specific instrumentation examples
-- [references/cleanup-patterns.md](./references/cleanup-patterns.md): cleanup guidance for removing debug artifacts
-
-Use this skill when investigating a bug, unexpected behavior, or runtime failure where the right fix is not yet proven:
+Use this skill when investigating a bug, unexpected behavior, or runtime failure where the right fix is not yet proven. It is designed for:
 
 - "Debug this issue"
 - "Figure out why this route sometimes returns 500"
